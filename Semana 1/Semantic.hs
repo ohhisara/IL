@@ -1,6 +1,7 @@
 import Syntax
 
 --eval(App (Fix (Lambda "f" (Lambda "x" (Ifzero (Var "x") (Const 1) ((Var "x"):*(App (Var "f") ((Var "x"):-(Const 1)))))))) (Const 3))
+
 eval:: Term -> Value
 eval (Var i) = Var i
 eval (Const i) = Const i
@@ -13,7 +14,7 @@ eval (t1 :- t2)= Const (primitive (-) (eval t1) (eval t2))
 eval (t1 :* t2)= Const (primitive (*) (eval t1) (eval t2))
 eval (t1 :/ t2)= Const (primitive (div) (eval t1) (eval t2))
 eval (Let id t1 t2) = eval (App (Lambda id t2) t1)
-eval (Fix t) = eval (fix t)
+eval (Fix t) = fix t
 
 fix::Term->Value
 fix (Lambda "f" (Lambda "x" t)) = Lambda "x" (subst t "f" (Fix (Lambda "f" (Lambda "x" t))))
@@ -62,6 +63,14 @@ ppTerm (Const n) = show n
 ppTerm (Var v) = v
 ppTerm (Lambda id e) = "\\" ++ id ++ "." ++ ppTerm e
 ppTerm (App t1 t2) = "(" ++ ppTerm t1 ++ ")" ++ "(" ++ ppTerm t2 ++ ")"
+ppTerm (Ifzero t1 t2 t3) = "if (" ++ ppTerm t1 ++ " == 0): " ++ ppTerm t2 ++ " else: " ++ ppTerm t3
+ppTerm (Let id t1 t2) = "let " ++ id ++ " = " ++ ppTerm t1 ++ " in " ++ ppTerm t2
+ppTerm (Fix t1 ) = "fix (" ++ ppTerm t1 ++ ")"
+ppTerm (t1:+t2) = (ppTerm t1) ++ " + " ++ (ppTerm t2)
+ppTerm (t1:-t2) = (ppTerm t1) ++ " - " ++ (ppTerm t2)
+ppTerm (t1:*t2) = (ppTerm t1)++ " * " ++(ppTerm t2)
+ppTerm (t1:/t2) = (ppTerm t1)++ " / " ++(ppTerm t2)
+
 
 out::Term -> String
 out t = pp (eval t)
