@@ -18,7 +18,7 @@ eval (Let id t1 t2) = eval (App (Lambda id t2) t1)
 eval (Fix t) = fix t
 
 fix::Term->Value
-fix (Lambda "f" (Lambda "x" t)) = Lambda "x" (subst t "f" (Fix (Lambda "f" (Lambda "x" t))))
+fix (Lambda f (Lambda x t)) = Lambda x (subst t f (Fix (Lambda f (Lambda x t))))
 
 primitive::(Int->Int->Int) -> Value -> Value -> Int
 primitive (+) (Const v1) (Const v2) = v1 + v2
