@@ -19,7 +19,7 @@ type Value = Term
 
 -----------------------
 data Value2 = Cons Int
- | Closure Term
+ | Closure Term Env
  deriving(Show)
 
 type Env=[(Id,Value2)]

@@ -7,8 +7,9 @@ eval (Var i) = Var i
 eval (Const i) = Const i
 eval (Lambda i t) = Lambda i t
 eval (App t1 t2) = (apply (eval t1)$!(eval t2))
-eval (Ifzero (Const 0) t2 t3) = eval t2
-eval (Ifzero (Const _) t2 t3) = eval t3
+eval (Ifzero t1 t2 t3)= case (eval t1) of
+	(Const 0) -> (eval t2)
+	(Const _) -> (eval t3)
 eval (t1 :+ t2)= Const (primitive (+) (eval t1) (eval t2))
 eval (t1 :- t2)= Const (primitive (-) (eval t1) (eval t2))
 eval (t1 :* t2)= Const (primitive (*) (eval t1) (eval t2))
