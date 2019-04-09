@@ -1,7 +1,7 @@
 module Instructions where
 
 data Instr = LDC Int 
- | LD String
+ | LD Int
  | LDF Code
  | LDRF Code
  | AP 
@@ -11,8 +11,8 @@ data Instr = LDC Int
  | ADD
  | SUB
  | MUL
- | DIV
  | HALT
+ | DELAY Code
  deriving(Show)
 
 type Code = [Instr]
