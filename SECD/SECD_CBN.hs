@@ -45,7 +45,7 @@ compile (Fix (Lambda f (Lambda x e))) sym = [LDRF (compile e sym' ++ [RTN])]
 execute::SECD -> SECD
 execute (s,e,(LDC i):c,d,m,ds) = ((V (Prim i):s),e,c,d,m,ds)
 execute (s,e, (LD i):c,d,m,ds) --procurar indice no ambiente
- | (isVal v) = (V (getVal v):s,e,c,d,m,ds) -- se for value guardar na stack
+ | (isVal v) = (v:s,e,c,d,m,ds) -- se for value guardar na stack
  | otherwise = (s,e,(getCode v)++c,d,m,ds) -- se for codigo acrescentar antes do codigo a avaliar
  where v = lookupId i e 
 execute (s,e,(LDF code):c,d,m,ds) = 
