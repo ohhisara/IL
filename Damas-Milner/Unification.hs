@@ -1,7 +1,7 @@
 module Unification where
     import Syntax
 
-    type Substitution = [(Type,TVar)]
+    
 
     --unify list os types
     unifyAll::[Type] -> [Type] -> Substitution
@@ -27,15 +27,19 @@ module Unification where
         
     --apply a Substitution to a Substitution
     applySubSub::(Type,TVar) -> Substitution -> Substitution
+    applySubSub _ [] = []
     applySubSub (t,v) ((t1,v1):xs)
      | v == v1 = ((t,v1):(applySubSub (t,v) xs))
      | otherwise = applySubSub (t,v) xs
     
     applySubSubList::Substitution -> Substitution -> Substitution
+    applySubSubList s [] = s
+    applySubSubList [] s = s
     applySubSubList ((t,v):s1) s2 = (applySubSub (t,v) s2)++(applySubSubList s1 s2)
 
     --apply a substitution to a type
     applySubType:: (Type,TVar) -> Type -> Type
+    applySubType (t,v) (Prim p) = (Prim p)
     applySubType (t,v) (Var v1)
      | v == v1 = t
      | otherwise = Var v1
@@ -45,4 +49,5 @@ module Unification where
     applySubTypeList::Substitution -> Type -> Type
     applySubTypeList [] t = t
     applySubTypeList ((t1,v):s) t= applySubTypeList s (applySubType (t1,v) t) 
+
 

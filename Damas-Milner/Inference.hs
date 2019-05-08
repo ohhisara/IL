@@ -21,7 +21,7 @@ module Inference where
     --    (s1,t2) <- infer env expr1
 
     applySubEnvList::Substitution->Env->Env
-    applySubEnvList [] _ = []
+    applySubEnvList [] env = env
     applySubEnvList ((x,t):xs) env = applySubEnvList xs (applySubEnv (x,t) env)
 
     applySubEnv::(Type,TVar)-> Env -> Env
@@ -42,3 +42,4 @@ module Inference where
     genSub::[TVar] -> Substitution
     genSub [] = []
     genSub (v:vs) = (Var (v++"'"),v):(genSub vs)
+
