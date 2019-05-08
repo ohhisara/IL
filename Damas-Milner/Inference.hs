@@ -1,9 +1,7 @@
 module Inference where
     import Syntax
+    import Substitution
     import Unification
-
-    type Env = [(Id,TypeScheme)]
-
 
     --inference algorithm
     infer:: Env -> Expr -> (Substitution, Type)
@@ -20,16 +18,7 @@ module Inference where
     --infer env (Let x expr1 expr2) = do
     --    (s1,t2) <- infer env expr1
 
-    applySubEnvList::Substitution->Env->Env
-    applySubEnvList [] env = env
-    applySubEnvList ((x,t):xs) env = applySubEnvList xs (applySubEnv (x,t) env)
-
-    applySubEnv::(Type,TVar)-> Env -> Env
-    applySubEnv _ [] = []
-    applySubEnv (t,v) ((id,ts):xs) 
-     | v == id = (id,TP t):(applySubEnv (t,v) xs)
-     |otherwise = (id,ts):(applySubEnv (t,v) xs)
-    
+    --lookup variable in an environment
     lookupEnv::Id -> Env -> (Substitution,Type)
     lookupEnv _ [] = error "chegou ao fim do ambiente"
     lookupEnv x ((id,TP t):xs)
@@ -39,6 +28,7 @@ module Inference where
      | x == id = ([], applySubTypeList (genSub l) t)
      | otherwise = lookupEnv x xs 
 
+    --generate new vars
     genSub::[TVar] -> Substitution
     genSub [] = []
     genSub (v:vs) = (Var (v++"'"),v):(genSub vs)
