@@ -15,12 +15,15 @@ module Inference where
            v = unify (applySubTypeList s2 t1) (Function t2 (Var "beta"))
            s = applySubSubList v (applySubSubList s2 s1)
            t = applySubTypeList v (Var "beta")
-    --infer env (Let x expr1 expr2) = do
-    --    (s1,t2) <- infer env expr1
+    infer env (Let x expr1 expr2) = (s,t2)
+      where (s1,t1) = infer env expr1
+            (s2,t2) = 
+                  infer ( unionEnv (applySubEnvList s1 env) (applySubEnvList s1  [(x, (closure t1 env))])) expr2
+            s = applySubSubList s2 s1
 
     --lookup variable in an environment
     lookupEnv::Id -> Env -> (Substitution,Type)
-    lookupEnv _ [] = error "chegou ao fim do ambiente"
+    lookupEnv _ [] = error "chegou ao fim do ambiente :("
     lookupEnv x ((id,TP t):xs)
      | x == id = ([], t)
      | otherwise = lookupEnv x xs 
@@ -32,4 +35,36 @@ module Inference where
     genSub::[TVar] -> Substitution
     genSub [] = []
     genSub (v:vs) = (Var (v++"'"),v):(genSub vs)
+
+    -- union of envs (?)
+    unionEnv::Env->Env -> Env 
+    unionEnv e1 e2 = e1 ++ e2 
+
+    -- free variables in type (?)
+    freeVarsType::Type -> [TVar]
+    freeVarsType (Prim s) = []
+    freeVarsType (Var v) = [v]
+    freeVarsType (Function t1 t2) = (freeVarsType t1)++(freeVarsType t2)
+
+    -- free variables in env (?)
+    freeVarsEnv::Env -> [TVar]
+    freeVarsEnv [] = []
+    freeVarsEnv ((id,ForAll l t):xs) = (freeVarsEnv xs)
+    freeVarsEnv ((id,TP t):xs) = (freeVarsType t)++(freeVarsEnv xs)
+      
+    --closure of a type with respect to env
+    closure::Type -> Env -> TypeScheme
+    closure t env = ForAll (notInList (freeVarsType t) (freeVarsEnv env)) t
+
+    -- check what variables are not in given list of variables
+    notIn::TVar -> [TVar] -> [TVar]
+    notIn v (v1:vs1) 
+     | v == v1 = []
+     | otherwise = []++(notIn v vs1)
+
+    notInList::[TVar] -> [TVar] -> [TVar]
+    notInList l [] = []
+    notInList [] l = l
+    notInList (v:vs) l = (notIn v l)++(notInList vs l)
+
 
