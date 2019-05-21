@@ -4,30 +4,38 @@ module Inference where
     import Unification
     import Debug.Trace
     import PrettyPrint
+    import Control.Monad.State
 
     --inference algorithm
-    infer:: Env -> Expr -> (Substitution, Type)
-    infer env (Const c) 
+    infer:: Env -> Expr -> Type -> (Substitution, Type)
+    infer env (Const c) v
      | isBool c = ([],typeBool)
      | otherwise = ([],typeInt)
 
-    infer env (Vari v) = lookupEnv v env 
+    infer env (Vari v) var = lookupEnv v env 
 
-    infer env (Abs x expr) = (s1,t)
-       where (s1,t1) = infer ((x,TP (Var "beta")):env) expr
-             t = Function (applySubTypeList s1 (Var "beta")) t1
+    infer env (Abs x expr) v = (s1,t)
+       where newv = fresh v 
+             (s1,t1) = infer ((x,TP newv):env) expr newv
+             t = Function (applySubTypeList s1 newv) t1
 
-    infer env (App expr1 expr2) = (s,t)
-     where (s1, t1) = infer env expr1
-           (s2,t2) = infer (applySubEnvList s1 env) expr2
-           v = unify (applySubTypeList s2 t1) (Function t2 (Var "beta"))
+    infer env (App expr1 expr2) var= (s,t)
+     where newv = fresh var
+           newv1 = fresh newv
+           newv2 = fresh newv1
+           (s1, t1) = infer env expr1 newv1
+           (s2,t2) = infer (applySubEnvList s1 env) expr2 newv2
+           v = 
+            case unify (applySubTypeList s2 t1) (Function t2 newv) of 
+                  Just v -> v 
+                  Nothing -> error "hm"
            s = applySubSubList v (applySubSubList s2 s1)
-           t = applySubTypeList v (Var "beta")
+           t = applySubTypeList v newv
            
-    infer env (Let x expr1 expr2) = (s,t2)
-      where (s1,t1) =  infer env expr1
+    infer env (Let x expr1 expr2) v= (s,t2)
+      where (s1,t1) =  infer env expr1 v
             (s2,t2) =
-                  infer ( unionEnv (applySubEnvList s1 env) (applySubEnvList s1  [(x, (closure t1 env))])) expr2
+                  infer (unionEnv (applySubEnvList s1 env) (applySubEnvList s1  [(x, (closure t1 env))])) expr2 v
             s = applySubSubList s2 s1
 
     --lookup variable in an environment
@@ -39,7 +47,48 @@ module Inference where
     lookupEnv x ((id,ForAll l t):xs)
      | x == id = ([], applySubTypeList (genSub l) t)
      | otherwise = lookupEnv x xs 
+     
+    --new var generation
+    fresh:: Type -> Type 
+    fresh (Var s) = Var (s++"'")
 
+    type MyVar = Type
+    nextVar::MyVar -> MyVar
+    nextVar (Var v) = Var (v ++ "'")
+
+    type MyVarMonad = State MyVar
+    genNew :: MyVarMonad MyVar
+    genNew = do {
+                 x <- get;
+                 put (nextVar x);
+                 return x;
+                 }
+      --state (\st -> let st' = nextVar(st) in (st',st'))
+
+    initVar::Type
+    initVar = Var "Beta"
+    
+    {-try::MyVarMonad MyVar
+    try = do
+      evalState genNew initVar
+      genNew-}
+
+
+
+
+    {-genNewVar::MyVarMonad MyVar
+    genNewVar = do
+      s <- get
+      put (getNext)
+      return s
+      case s of 
+            (state t1 t2) -> return s
+      n <- getNext
+      case n of
+            (state s1 s2 )-> put n-}
+      
+    --newVar = evalState genNewVar initVar
+        
     --generate new vars
     genSub::[TVar] -> Substitution
     genSub [] = []
@@ -75,8 +124,9 @@ module Inference where
     isBool "False" = True 
     isBool _ = False  
 
-    main::Env -> Expr-> String
-    main env e = pp (infer env e)
+
+    --main::Env -> Expr-> IO()
+    --main env e = pp (infer env e)
 
     {-run::Env -> Expr -> IO()
     run env e = sequence_ [print state | state <- trace]
